@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>蜜罐是什麼？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: 給新手的課堂，親切、清楚、每頁一個重點
+IDEA: 一罐蜂蜜的標籤——蜂蜜色色塊、深褐字、警報紅只用在「有人碰了」
+PICTURE: 每頁一張 SVG 示意（罐子、流程、尺寸比較），比例約四成
+COLOUR and TYPE: 蜂蜜黃 #f4b324 主色、奶白 #fffaf0、深褐 #2b1a0e、警報紅 #e0322b；Noto Sans TC 900/500
+LAYOUT: 16:9 舞台等比縮放；左文右圖或上標題下三欄；底部固定標出 Wiki 來源
+*/
+:root{color-scheme:light dark;--bg:light-dark(#fffaf0,#1c120a);--ink:light-dark(#2b1a0e,#fbeedb);--honey:#f4b324;--honey2:light-dark(#fde7b0,#5a3d12);--red:#e0322b;--mute:light-dark(#7a5c40,#c9ad8c);--card:light-dark(#ffffff,#2a1c10)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:light-dark(#efe4cf,#0f0904);color:var(--ink);font:500 16px/1.55 "Noto Sans TC",system-ui,sans-serif;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center;}
+.slide{position:absolute;inset:0;background:var(--bg);display:none;padding:56px 72px 70px;overflow:hidden;border-radius:6px}
+.slide.on{display:flex;flex-direction:column;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.slide.on{animation:none}}
+h1{font-size:64px;font-weight:900;line-height:1.05;margin:0 0 18px;text-wrap:balance}
+h2{font-size:44px;font-weight:900;line-height:1.1;margin:0 0 26px;text-wrap:balance}
+h3{font-size:24px;font-weight:900;margin:0 0 8px}
+p,li{font-size:23px;line-height:1.55;margin:0 0 12px}
+ul{padding-left:1.1em;margin:0}
+.lead{font-size:27px}
+.small{font-size:18px;color:var(--mute)}
+.row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;flex:1;align-items:center}
+.cols{display:grid;gap:24px;flex:1;align-content:center}
+.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.c3{grid-template-columns:repeat(3,minmax(0,1fr))}.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--card);border-radius:14px;padding:24px 24px 18px;box-shadow:0 2px 0 light-dark(#e8d6b5,#3d2a17)}
+.card p,.card li{font-size:22px}
+.honey{background:var(--honey);color:#2b1a0e}
+.honey .small{color:#5a3a1a}
+.tag{display:inline-block;background:var(--honey2);border-radius:99px;padding:2px 14px;font-size:17px;margin-bottom:10px}
+.alarm{color:var(--red);font-weight:900}
+.quote{font-size:30px;font-weight:700;line-height:1.45;border-left:8px solid var(--honey);padding-left:24px;margin:0 0 20px}
+.foot{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;font-size:15px;color:var(--mute)}
+.foot b{color:var(--ink);font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:22px}
+th,td{text-align:left;padding:10px 14px;border-bottom:2px solid var(--honey2)}
+th{font-weight:900;background:var(--honey2)}
+.tl{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:8px;flex:1;align-content:center}
+.tl .card{padding:18px}.tl .yr{display:block;font-size:26px;font-weight:900;color:#a86d00;margin-bottom:6px}.tl .honey .yr{color:#2b1a0e}
+.tl p{font-size:18px}
+.cover{background:var(--honey);color:#2b1a0e;justify-content:center}
+.cover h1{font-size:92px}
+.cover .foot,.cover .foot b{color:#5a3a1a}
+svg text{font-family:"Noto Sans TC",sans-serif}
+.quiz button{font:inherit;font-size:20px;display:block;width:100%;text-align:left;margin:6px 0;padding:10px 14px;min-height:44px;border-radius:10px;border:2px solid var(--honey2);background:var(--card);color:var(--ink);cursor:pointer}
+.quiz button:focus-visible{outline:3px solid var(--red)}
+.quiz button.ok{background:#d8f2dc;border-color:#2f9a46;color:#123}
+.quiz button.no{background:#fbd9d6;border-color:var(--red);color:#300}
+.fb{font-size:18px;min-height:28px;margin-top:4px}
+.appendix{background:light-dark(#fff3d6,#241809)}
+.graph{flex:1;position:relative}
+#nav{position:fixed;bottom:12px;right:16px;display:flex;gap:8px;align-items:center;z-index:5}
+#nav button{font:700 18px "Noto Sans TC",sans-serif;width:48px;height:44px;border-radius:10px;border:0;background:var(--honey);color:#2b1a0e;cursor:pointer}
+#nav span{font-size:15px;background:var(--bg);padding:6px 10px;border-radius:8px}
+#bar{position:fixed;left:0;top:0;height:5px;background:var(--honey);transition:width .3s}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="stage">
+
+<section class="slide cover" data-wiki="01-definition" data-src="S1 S2">
+  <div class="row">
+    <div>
+      <p class="tag" style="background:#fff3cf">資安入門｜15 分鐘</p>
+      <h1>蜜罐是什麼？</h1>
+      <p class="lead">一個故意做得很誘人的「假目標」，<br>讓駭客自己走進來、被我們看清楚。</p>
+      <p class="small">按 → / 空白鍵 換頁，← 上一頁</p>
+    </div>
+    <svg viewBox="0 0 400 400" aria-label="一罐蜂蜜旁有監視器">
+      <ellipse cx="200" cy="360" rx="150" ry="18" fill="#c98b0a" opacity=".5"/>
+      <path d="M95 140 Q90 340 130 350 L270 350 Q310 340 305 140 Z" fill="#fff6dd"/>
+      <path d="M102 220 Q100 338 132 344 L268 344 Q300 338 298 220 Z" fill="#e89a00"/>
+      <rect x="85" y="110" width="230" height="40" rx="10" fill="#7a4a12"/>
+      <rect x="140" y="230" width="120" height="70" rx="8" fill="#fffaf0"/>
+      <text x="200" y="275" text-anchor="middle" font-size="30" font-weight="900" fill="#2b1a0e">HONEY</text>
+      <path d="M120 160 q10 30 0 55" stroke="#fff" stroke-width="8" fill="none" opacity=".6"/>
+      <rect x="300" y="40" width="70" height="36" rx="6" fill="#2b1a0e"/>
+      <circle cx="312" cy="58" r="8" fill="#e0322b"/>
+      <path d="M300 62 L250 100" stroke="#2b1a0e" stroke-width="6"/>
+      <path d="M300 58 L210 150 L330 110 Z" fill="#fff" opacity=".35"/>
+    </svg>
+  </div>
+</section>
+
+<section class="slide" data-wiki="01-definition" data-src="S1 S3">
+  <h2>先想像一個情境</h2>
+  <div class="row">
+    <div>
+      <p class="quote">家裡放一個「看起來裝滿現金」的保險箱，其實是空的，上面裝了監視器。</p>
+      <ul>
+        <li>家人知道它是假的，<b>不會去開</b></li>
+        <li>所以只要有人開它 → <span class="alarm">一定是小偷</span></li>
+        <li>監視器還錄下他<b>怎麼開鎖</b></li>
+      </ul>
+      <p class="lead" style="margin-top:18px">這個假保險箱，就是電腦世界的<b>蜜罐</b>。</p>
+    </div>
+    <svg viewBox="0 0 400 320" aria-label="假保險箱與小偷">
+      <rect x="60" y="70" width="200" height="200" rx="12" fill="#5c3a18"/>
+      <rect x="78" y="88" width="164" height="164" rx="8" fill="#7a4e22"/>
+      <circle cx="160" cy="170" r="38" fill="#f4b324"/><circle cx="160" cy="170" r="10" fill="#5c3a18"/>
+      <text x="160" y="60" text-anchor="middle" font-size="22" font-weight="900" fill="currentColor">$$$（其實是空的）</text>
+      <rect x="290" y="30" width="80" height="40" rx="6" fill="#2b1a0e"/><circle cx="304" cy="50" r="8" fill="#e0322b"/>
+      <path d="M300 70 L230 150 L380 120Z" fill="#f4b324" opacity=".35"/>
+      <text x="330" y="300" text-anchor="middle" font-size="20" fill="#e0322b" font-weight="900">錄影中 ●</text>
+    </svg>
+  </div>
+</section>
+
+<section class="slide" data-wiki="01-definition" data-src="S1 S8">
+  <h2>正式定義</h2>
+  <div class="cols c2">
+    <div class="card honey">
+      <span class="tag" style="background:#fff3cf">NIST（美國國家標準與技術研究院）</span>
+      <p class="lead">刻意設計成<b>對入侵者有吸引力</b>的<br>系統（例如網頁伺服器），<br>或系統資源（例如<b>一個檔案</b>）。</p>
+      <p class="small">就像蜂蜜吸引熊</p>
+    </div>
+    <div class="card">
+      <span class="tag">Lance Spitzner（Honeynet Project 創辦人）</span>
+      <p class="lead">蜜罐的價值，就在於它<b>被探測、被攻擊、被入侵</b>。</p>
+      <p class="small">一般系統怕被攻擊；蜜罐「被攻擊」才有用</p>
+    </div>
+  </div>
+  <p class="lead">重點：蜜罐可以大到一整個網路，也可以<b>小到一個檔案</b>。</p>
+</section>
+
+<section class="slide" data-wiki="01-definition 06-pros-risks-detection" data-src="S2 S3 S7">
+  <h2>反過來想：把駭客「請進來」</h2>
+  <div class="cols c3">
+    <div class="card"><h3>一般資安工具</h3><p>防火牆、防毒：<br>想把駭客<b>擋在外面</b></p></div>
+    <div class="card honey"><h3>蜜罐</h3><p>故意讓駭客<b>進來</b>，<br>在受控的地方觀察他</p></div>
+    <div class="card"><h3>為什麼誤報很少？</h3><p>蜜罐沒有正常用途，<br>會碰它的<span class="alarm">幾乎都是攻擊者</span></p></div>
+  </div>
+  <p class="small">名字來自諜報界：用誘惑讓目標上鉤，再從他身上取得情報。蜜罐屬於「被動防禦」，不會主動攻擊別人。</p>
+</section>
+
+<section class="slide" data-wiki="02-history" data-src="S2 S4 S8 S9">
+  <h2>蜜罐的小歷史</h2>
+  <div class="tl">
+    <div class="card"><span class="yr">1990/91</span><p>Stoll《The Cuckoo's Egg》與 Cheswick 的 Berferd 論文，最早公開記錄這種做法</p></div>
+    <div class="card honey"><span class="yr">1991.1</span><p>AT&amp;T 貝爾實驗室發現有人想偷密碼檔，<b>故意寄假檔給他</b>，再把他關進「監獄」觀察</p></div>
+    <div class="card"><span class="yr">1997–98</span><p>Deception Toolkit、CyberCop Sting：第一批給大家用的蜜罐工具</p></div>
+    <div class="card"><span class="yr">1999</span><p>Lance Spitzner 成立 Honeynet Project 國際研究組織</p></div>
+    <div class="card"><span class="yr">2003–13</span><p>攻擊者開始研究「怎麼認出蜜罐」</p></div>
+    <div class="card"><span class="yr">近年</span><p>用 LLM 即時產生假檔案和回應，更難被識破</p></div>
+  </div>
+  <p class="small" style="margin-top:22px">⚠ 有網路文章說 AT&amp;T 事件在 1990 年；原始論文寫的是 1991 年 1 月 7 日，這裡採用原始論文。</p>
+</section>
+
+<section class="slide" data-wiki="03-how-it-works" data-src="S2 S3 S7">
+  <h2>蜜罐怎麼運作？五個步驟</h2>
+  <svg viewBox="0 0 1136 300" style="width:100%;height:300px" aria-label="五步驟流程">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#c98b0a"/></marker></defs>
+    <g id="steps"></g>
+  </svg>
+  <p class="lead">最後一步最重要：蜜罐<b>本身不會擋攻擊</b>，要把學到的東西拿去<b>強化真正的系統</b>。</p>
+</section>
+
+<section class="slide" data-wiki="03-how-it-works" data-src="S5 S7 S3">
+  <h2>蜜罐能看到什麼？</h2>
+  <div class="row">
+    <div>
+      <ul>
+        <li>攻擊者從哪個 <b>IP 位址</b>來</li>
+        <li>他試了哪些<b>帳號密碼</b>、拿到什麼權限</li>
+        <li>他看了、改了、刪了哪些<b>資料</b></li>
+        <li>他想放進來的<b>惡意程式</b></li>
+      </ul>
+      <p class="small" style="margin-top:16px">因為正常人不會來，這些紀錄幾乎都是「純攻擊」資料，分析起來很乾淨。</p>
+    </div>
+    <div class="card" style="background:#1d130b;color:#f6e6c8;font-family:ui-monospace,Menlo,monospace">
+      <p class="small" style="color:#f4b324">例：Cowrie（開源 SSH 蜜罐）的紀錄長這樣（示意）</p>
+      <p style="font-size:18px;line-height:1.7;font-family:inherit">登入嘗試 root / 123456 → <span style="color:#7fd48a">「成功」</span><br>$ uname -a<br>$ wget http://…/bot.sh<br><span style="color:#f4b324">→ 檔案已保存，等待分析</span><br>$ cat /etc/passwd<br><span style="color:#f4b324">→ 看到的是假檔案</span></p>
+      <p class="small" style="color:#c9ad8c">整段連線還可以「重播」，看攻擊者當時怎麼打字。</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-wiki="04-types" data-src="S2 S3">
+  <h2>分類一：為了什麼目的？</h2>
+  <div class="cols c2">
+    <div class="card honey"><h3>生產型蜜罐</h3><ul><li>一般<b>企業</b>使用</li><li>目的：抓<b>自家網路</b>裡的攻擊</li><li>簡單、便宜，最常見</li><li>缺點：只看得到自己的網路</li></ul></div>
+    <div class="card"><h3>研究型蜜罐</h3><ul><li><b>大學、政府、資安公司</b>使用</li><li>目的：研究駭客的工具、手法、動機</li><li>複雜、成本高</li><li>能看到更廣的攻擊趨勢</li></ul></div>
+  </div>
+  <p class="lead">比喻：生產型＝店裡的防盜警報；研究型＝警察的誘捕研究小組。</p>
+</section>
+
+<section class="slide" data-wiki="04-types 06-pros-risks-detection" data-src="S2 S3 S4">
+  <h2>分類二：做得有多「真」？</h2>
+  <table>
+    <tr><th></th><th>低互動</th><th>中互動</th><th>高互動</th></tr>
+    <tr><td><b>是什麼</b></td><td>只假裝幾個服務</td><td>模擬部分系統，可以下指令</td><td>完整的真系統</td></tr>
+    <tr><td><b>比喻</b></td><td>門口的假監視器</td><td>逼真的樣品屋</td><td>真房子，但整棟被監控</td></tr>
+    <tr><td><b>成本</b></td><td>低</td><td>中</td><td>高</td></tr>
+    <tr><td><b>風險</b></td><td>低</td><td>中</td><td class="alarm">高</td></tr>
+    <tr><td><b>得到的資料</b></td><td>基本統計</td><td>指令、惡意程式</td><td>最完整</td></tr>
+    <tr><td><b>被識破</b></td><td class="alarm">很容易</td><td>中等</td><td>較難</td></tr>
+  </table>
+  <p class="small" style="margin-top:14px">大多數生產型是低互動；大多數研究型是高互動。上一頁的 Cowrie 屬於中互動。</p>
+</section>
+
+<section class="slide" data-wiki="04-types" data-src="S3">
+  <h2>分類三：想抓哪一種攻擊？</h2>
+  <div class="cols c4">
+    <div class="card"><h3>垃圾郵件陷阱</h3><p>只有自動爬蟲找得到的假信箱，寄來的信都是垃圾郵件</p></div>
+    <div class="card"><h3>誘餌資料庫</h3><p>故意有漏洞的假資料，抓想偷資料的人</p></div>
+    <div class="card"><h3>惡意程式蜜罐</h3><p>假裝是軟體或 API，把惡意程式引進來研究</p></div>
+    <div class="card"><h3>蜘蛛蜜罐</h3><p>只有爬蟲看得到的網頁，找出惡意機器人</p></div>
+  </div>
+</section>
+
+<section class="slide" data-wiki="05-honeynet-honeytoken" data-src="S1 S2 S3 S6">
+  <h2>同一個想法，三種尺寸</h2>
+  <svg viewBox="0 0 1136 250" style="width:100%;height:250px" aria-label="蜜標、蜜罐、蜜網的尺寸比較">
+    <rect x="120" y="150" width="60" height="70" rx="6" fill="#fff" stroke="#c98b0a" stroke-width="4"/><path d="M135 172h30M135 188h30M135 204h20" stroke="#c98b0a" stroke-width="4"/>
+    <path d="M460 100 Q455 225 480 230 L600 230 Q625 225 620 100Z" fill="#f4b324"/><rect x="450" y="82" width="180" height="26" rx="6" fill="#7a4a12"/>
+    <g fill="#f4b324" stroke="#7a4a12" stroke-width="3"><rect x="820" y="40" width="80" height="60" rx="8"/><rect x="960" y="40" width="80" height="60" rx="8"/><rect x="820" y="160" width="80" height="60" rx="8"/><rect x="960" y="160" width="80" height="60" rx="8"/></g>
+    <path d="M900 70H960M900 190H960M860 100V160M1000 100V160" stroke="#7a4a12" stroke-width="4"/>
+  </svg>
+  <div class="cols c3">
+    <div class="card"><h3>蜜標：一筆假資料</h3><p>假帳號、假金鑰、誘餌文件。<br>問：「有沒有人碰了不該碰的？」<br><span class="small">成本最低</span></p></div>
+    <div class="card honey"><h3>蜜罐：一個假系統</h3><p>假伺服器、假資料庫。<br>問：「攻擊者進來後做了什麼？」</p></div>
+    <div class="card"><h3>蜜網：一整個假網路</h3><p>多個蜜罐連在一起。<br>問：「攻擊者怎麼在系統間移動？」</p></div>
+  </div>
+</section>
+
+<section class="slide" data-wiki="06-pros-risks-detection" data-src="S2 S3">
+  <h2>好處與風險</h2>
+  <div class="cols c2">
+    <div class="card"><h3>👍 好處</h3><ul><li><b>誤報少</b>：碰它的幾乎都是壞人</li><li><b>早發現</b>：像一條絆線</li><li>看得到攻擊<b>怎麼演變</b></li><li>外部駭客、<b>內部人員</b>都抓得到</li></ul></div>
+    <div class="card" style="border:3px solid var(--red)"><h3 class="alarm">⚠ 風險</h3><ul><li><b>變成跳板</b>：隔離沒做好，駭客從假系統跳進真系統</li><li><b>被反利用</b>：灌假流量、故意餵錯資訊</li><li><b>不是萬靈丹</b>：不會擋攻擊，也不會修漏洞</li><li>高互動很<b>貴</b>，需要專人</li></ul></div>
+  </div>
+</section>
+
+<section class="slide" data-wiki="06-pros-risks-detection" data-src="S4 S2">
+  <h2>駭客也會「認出」蜜罐</h2>
+  <div class="row">
+    <div>
+      <ul>
+        <li>低互動蜜罐只是「模仿」，細節很難做到完美 → <b>幾乎一定能被認出來</b></li>
+        <li>實例：掃描工具 Nmap 能認出某些蜜罐；搜尋引擎 Shodan 有「honeyscore」幫人判斷</li>
+        <li>所以低互動適合抓<b>自動化的</b>攻擊；想觀察<b>高手</b>，要用調校過的高互動蜜罐</li>
+        <li>新做法：用 LLM 即時產生逼真回應</li>
+      </ul>
+    </div>
+    <div class="card honey"><p class="quote" style="border-color:#2b1a0e;font-size:26px">假監視器嚇得跑小賊，<br>但專業小偷一眼就看出沒插電。</p><p class="small">這是一場「識破 → 修補 → 再改進」的循環</p></div>
+  </div>
+</section>
+
+<section class="slide" data-wiki="07-deployment" data-src="S2 S3 S4 S6">
+  <h2>想放蜜罐？六個原則</h2>
+  <div class="cols c3">
+    <div class="card"><h3>1 先定目的</h3><p>保護自家網路，還是做研究？</p></div>
+    <div class="card"><h3>2 隔離</h3><p>和真系統分開，避免變跳板</p></div>
+    <div class="card"><h3>3 量力而為</h3><p>小團隊從低互動或蜜標開始</p></div>
+    <div class="card"><h3>4 做得像真的</h3><p>改掉預設值；不要取名「honeypot.txt」</p></div>
+    <div class="card"><h3>5 接上警報</h3><p>沒人收到通知的誘餌等於沒用</p></div>
+    <div class="card"><h3>6 持續維護</h3><p>不是裝了就不管；搭配其他防禦</p></div>
+  </div>
+</section>
+
+<section class="slide quiz" data-wiki="01-definition 04-types 05-honeynet-honeytoken" data-src="S2 S3 S6">
+  <h2>小測驗：你懂了嗎？</h2>
+  <div class="cols c3" id="quiz"></div>
+</section>
+
+<section class="slide honey" data-wiki="01-definition 03-how-it-works 04-types 05-honeynet-honeytoken 06-pros-risks-detection 07-deployment" data-src="S1–S9">
+  <h2>重點回顧</h2>
+  <div class="cols c2">
+    <div><ul>
+      <li><b>蜜罐</b>＝故意做得很誘人的假目標</li>
+      <li>沒有正常用途 → 碰它的<b>幾乎都是攻擊者</b></li>
+      <li>流程：擺誘餌 → 留破綻 → 記錄 → 分析 → 強化真系統</li>
+    </ul></div>
+    <div><ul>
+      <li>越真（高互動）→ 資料越多，但<b>越貴、越危險</b></li>
+      <li>蜜標 &lt; 蜜罐 &lt; 蜜網：同一想法，不同尺寸</li>
+      <li>一定要<b>隔離、接警報、持續維護</b></li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="slide no-source" data-src="raw/">
+  <h2>參考來源（Wiki 收錄 9 篇）</h2>
+  <div class="cols c2" style="font-size:18px">
+    <ol style="margin:0;padding-left:1.4em">
+      <li style="font-size:18px"><a href="https://csrc.nist.gov/glossary/term/honeypot">NIST CSRC Glossary — honeypot</a></li>
+      <li style="font-size:18px"><a href="https://www.splunk.com/en_us/blog/learn/cybersecurity-honeypots.html">Splunk — Why Honeypots Work</a></li>
+      <li style="font-size:18px"><a href="https://www.crowdstrike.com/en-us/cybersecurity-101/exposure-management/honeypots/">CrowdStrike — What Is a Honeypot?</a></li>
+      <li style="font-size:18px"><a href="https://honeynet.org/2015/08/06/low-interaction-honeypots-revisited/">Honeynet Project — Low Interaction Honeypots Revisited</a></li>
+      <li style="font-size:18px"><a href="https://github.com/cowrie/cowrie">Cowrie 官方 GitHub</a> / <a href="https://en.wikipedia.org/wiki/Cowrie_(honeypot)">Wikipedia</a></li>
+    </ol>
+    <ol start="6" style="margin:0;padding-left:1.4em">
+      <li style="font-size:18px"><a href="https://cyberdefenders.org/cybersecurity-glossary/honeytokens/">CyberDefenders — Honeytokens</a></li>
+      <li style="font-size:18px"><a href="https://encyclopedia.kaspersky.com/glossary/honeypot/">Kaspersky Encyclopedia — Honeypot</a></li>
+      <li style="font-size:18px"><a href="https://en.wikipedia.org/wiki/Honeynet_Project">Honeynet Project（Wikipedia）</a> / <a href="https://giac.org/paper/gsec/2300/honeypots-weighing-costs-benefits/103964">SANS GIAC 論文</a></li>
+      <li style="font-size:18px"><a href="https://www.cerias.purdue.edu/apps/reports_and_papers/view/1007">Cheswick — An Evening with Berferd</a> / <a href="https://www.oreilly.com/library/view/honeypots-tracking-hackers/0321108957/0321108957_ch03lev1sec1.html">Spitzner 專書時間軸</a></li>
+    </ol>
+  </div>
+  <p class="small" style="margin-top:20px">下一頁起是附錄：這份簡報是怎麼用 LLM Wiki 做出來的。</p>
+</section>
+
+<section class="slide appendix no-source" data-src="log.md">
+  <h2>附錄 A｜我的 graph：資料怎麼變成簡報</h2>
+  <div class="graph" style="margin-top:-10px"><svg id="g" viewBox="0 0 1136 520" style="width:100%;height:520px" aria-label="流程圖"></svg></div>
+</section>
+
+<section class="slide appendix no-source" data-src="log.md">
+  <h2>附錄 B｜哪裡會重複？哪裡要檢查？</h2>
+  <div class="cols c3">
+    <div class="card"><h3>🔁 會重複的</h3><ul><li><b>Ingest 迴圈</b>：每來一篇就跑一次 raw → claims → 檢查</li><li><b>逐頁 Query</b>：每張投影片各查一次 Wiki</li><li><b>Lint ↔ 修正</b>：跑到 0 個問題才往下</li></ul></div>
+    <div class="card"><h3>✅ 檢查點</h3><ul><li><b>檢查 A</b>（ingest 後）：關鍵事實是否只有單一來源、是否矛盾</li><li><b>檢查 B</b>（Wiki lint）：無來源句、斷鏈、術語</li><li><b>檢查 C</b>（簡報）：原始碼 lint（對應 Wiki、字數、術語）＋無頭瀏覽器逐頁渲染（換頁、溢出、字超框）</li></ul></div>
+    <div class="card"><h3>💡 為什麼這樣設計</h3><ul><li>簡報<b>只能從 Wiki 拿內容</b>，錯誤只要在 Wiki 修一次</li><li>兩個<b>人工關卡</b>（選題、結構）放在最前面，最便宜</li><li>檢查越早越省：在 raw 擋掉錯誤，比在簡報改便宜</li></ul></div>
+  </div>
+</section>
+
+<section class="slide appendix no-source" data-src="log.md">
+  <h2>附錄 C｜反思</h2>
+  <div class="cols c3" id="reflect"></div>
+</section>
+
+</div>
+<nav id="nav"><button id="prev" aria-label="上一頁">←</button><span id="pg">1</span><button id="next" aria-label="下一頁">→</button></nav>
+
+<script>
+{
+const steps=[["擺誘餌","假伺服器、假資料"],["留破綻","弱密碼、開著的埠"],["全程記錄","每個動作都存下"],["分析","來源、工具、目的"],["回饋","修漏洞、更新規則"]];
+const sg=document.getElementById('steps');
+sg.innerHTML=steps.map((s,i)=>{const x=10+i*228;const hot=i===4;return `<g><rect x="${x}" y="40" width="190" height="190" rx="18" fill="${hot?'#f4b324':'#fde7b0'}"/><circle cx="${x+40}" cy="80" r="24" fill="#2b1a0e"/><text x="${x+40}" y="89" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">${i+1}</text><text x="${x+20}" y="150" font-size="32" font-weight="900" fill="#2b1a0e">${s[0]}</text><text x="${x+20}" y="192" font-size="19" fill="#5a3a1a">${s[1]}</text>${i<4?`<path d="M${x+194} 135 H${x+224}" stroke="#c98b0a" stroke-width="5" marker-end="url(#ar)"/>`:''}</g>`}).join('');
+
+const Q=[
+ {q:"為什麼蜜罐的警報「誤報」很少？",a:["因為它裝了最強的防毒","因為正常使用者不會去碰它","因為它會自動攻擊回去"],ok:1,why:"蜜罐沒有正常用途，會碰它的幾乎都是攻擊者。"},
+ {q:"哪一種蜜罐資料最豐富，但風險也最高？",a:["低互動","中互動","高互動"],ok:2,why:"高互動是完整真系統，資料最多，但隔離不好會變成跳板。"},
+ {q:"在檔案夾放一份假的「密碼表」，有人打開就發警報，這叫？",a:["蜜標","蜜網","防火牆"],ok:0,why:"蜜標是放在真實系統裡的一筆假資料。"}];
+document.getElementById('quiz').innerHTML=Q.map((o,i)=>`<div class="card"><p style="font-size:21px"><b>${i+1}.</b> ${o.q}</p>${o.a.map((t,j)=>`<button data-q="${i}" data-a="${j}">${t}</button>`).join('')}<p class="fb" id="fb${i}"></p></div>`).join('');
+document.getElementById('quiz').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.q,j=+b.dataset.a,o=Q[i];b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('ok','no'));b.classList.add(j===o.ok?'ok':'no');document.getElementById('fb'+i).textContent=(j===o.ok?'答對！':'再想想：')+o.why;});
+
+const R=[["哪個節點最常出錯？","次數最多：<b>⑧ 生成投影片</b>。原始碼 lint 全過，實際渲染卻有 4 個問題（金字配蜂蜜底看不清、方框文字溢出、流程圖虛線壓字、大片留白）。最嚴重：<b>③ Ingest</b>，把廠商文章的「1990 年」抄進摘要，原始論文其實是 1991 年 1 月。連檢查工具本身也出過錯：換頁 bug 讓渲染檢查只量到第 1 頁，結果「全部通過」是假的。"],
+ ["檢查往前移到哪？","① 年份、人名、「第一個」這類關鍵事實：從 Wiki lint 移到 <b>ingest 當下</b>（檢查 A），只有單一來源就先回去找一手資料。② 版面問題：從「最後用人眼看」移進 <b>檢查 C 的自動渲染</b>，而且第一步先確認換頁可用。③ 在 <b>⑥ 大綱</b>就限制方框說明 8 字以內。"],
+ ["有沒有改 graph？為什麼？","有，改了三處：加上檢查 A 和它的回邊；檢查 C 從「只看原始碼」改成「lint＋逐頁渲染」，把原本最後的「瀏覽器實看」併進去；加上「Wiki 缺內容 → 回 ②」，不准 LLM 自己補。原因：錯誤越晚發現越貴；而且只有 Wiki 是唯一事實來源，簡報絕不能自己生出新事實。"]];
+document.getElementById('reflect').innerHTML=R.map(r=>`<div class="card"><h3>${r[0]}</h3><p style="font-size:18px;line-height:1.5">${r[1]}</p></div>`).join('');
+
+const N=[[20,50,"① 討論選題","人",1],[220,50,"② 搜尋取得","WebSearch",0],[420,50,"③ Ingest","raw 摘要＋claims",0],[620,50,"檢查 A","單一來源？矛盾？",2],[820,50,"④ 討論結構","人",1],
+ [820,220,"⑤ 生成 Wiki","7 頁＋[S#]",0],[620,220,"檢查 B","lint_wiki.py",2],[420,220,"⑥ 簡報大綱","讀 index.md",0],[220,220,"⑦ 逐頁 Query","每頁查 Wiki",0],[20,220,"⑧ 生成投影片","data-wiki 標註",0],
+ [20,390,"檢查 C","lint＋逐頁渲染",2],[220,390,"⑨ 發佈","artifact",0]];
+const col=k=>k===1?'#ffffff':k===2?'#e0322b':'#f4b324', tx=k=>k===2?'#fff':'#2b1a0e';
+let s='<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7a4a12"/></marker><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e0322b"/></marker></defs>';
+const line=(d,red)=>`<path d="${d}" stroke="${red?'#e0322b':'#7a4a12'}" stroke-width="3" fill="none" ${red?'stroke-dasharray="7 5"':''} marker-end="url(#${red?'a3':'a2'})"/>`;
+const lab=(x,y,t,a)=>`<text x="${x}" y="${y}" text-anchor="${a||'middle'}" font-size="16" font-weight="700" fill="#e0322b">${t}</text>`;
+s+=[0,1,2,3].map(i=>line(`M${N[i][0]+172} 90H${N[i+1][0]-4}`)).join('');
+s+=line('M905 132V216');
+s+=[5,6,7,8].map(i=>line(`M${N[i][0]-2} 260H${N[i+1][0]+174}`)).join('');
+s+=line('M150 302V386')+line('M192 430H216');
+s+=line('M705 48V30H305V46',1)+lab(505,22,'失敗 → 回去找一手來源');
+s+=line('M705 302V322H905V306',1)+lab(805,342,'有問題 → 修 Wiki');
+s+=line('M50 388V306',1)+lab(60,350,'重生成','start');
+s+=line('M105 472V494H8V176H305V134',1)+lab(16,512,'Wiki 缺內容 → 回 ② 重新取得，不准 LLM 自己補','start');
+s+=N.map(([x,y,t,sub,k])=>`<g><rect x="${x}" y="${y}" width="170" height="80" rx="14" fill="${col(k)}" stroke="#7a4a12" stroke-width="${k===1?3:0}"/><text x="${x+85}" y="${y+36}" text-anchor="middle" font-size="21" font-weight="900" fill="${tx(k)}">${t}</text><text x="${x+85}" y="${y+62}" text-anchor="middle" font-size="15" fill="${tx(k)}">${sub}</text></g>`).join('');
+s+=`<g class="legend" font-size="17" fill="currentColor"><rect x="640" y="400" width="22" height="22" rx="4" fill="#fff" stroke="#7a4a12" stroke-width="3"/><text x="672" y="417">人工關卡（先討論）</text><rect x="640" y="436" width="22" height="22" rx="4" fill="#f4b324"/><text x="672" y="453">LLM 執行</text><rect x="860" y="400" width="22" height="22" rx="4" fill="#e0322b"/><text x="892" y="417">檢查點</text><path d="M858 447h26" stroke="#e0322b" stroke-width="3" stroke-dasharray="6 4"/><text x="892" y="453">迴圈（重做）</text></g>`;
+document.getElementById('g').innerHTML=s;
+
+const slides=[...document.querySelectorAll('.slide')];
+slides.forEach((el,i)=>{const w=el.dataset.wiki,src=el.dataset.src;const f=document.createElement('div');f.className='foot';f.innerHTML=`<span>${w?`Wiki：<b>${w.split(' ').join('、')}</b>`:'附錄 / 參考'}${src?`｜來源 ${src}`:''}</span><span>${i+1} / ${slides.length}</span>`;el.appendChild(f)});
+let cur=0;
+const show=n=>{cur=Math.max(0,Math.min(slides.length-1,n));slides.forEach((el,i)=>el.classList.toggle('on',i===cur));document.getElementById('pg').textContent=`${cur+1} / ${slides.length}`;document.getElementById('bar').style.width=`${(cur+1)/slides.length*100}%`;try{history.replaceState(null,'','#s'+(cur+1))}catch(e){}};
+const fit=()=>{const st=document.getElementById('stage');const k=Math.min(innerWidth/1280,(innerHeight-60)/720);st.style.transform=`translate(-50%,-50%) translate(0,-22px) scale(${k})`};
+addEventListener('resize',fit);fit();
+document.getElementById('prev').onclick=()=>show(cur-1);
+document.getElementById('next').onclick=()=>show(cur+1);
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(cur+1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(cur-1)}});
+let tx0=null;addEventListener('touchstart',e=>tx0=e.touches[0].clientX);addEventListener('touchend',e=>{if(tx0===null)return;const d=e.changedTouches[0].clientX-tx0;if(Math.abs(d)>50)show(cur+(d<0?1:-1));tx0=null});
+const fromHash=()=>{const m=/^#s(\d+)$/.exec(location.hash);return m?+m[1]-1:0};
+addEventListener('hashchange',()=>{const n=fromHash();if(n!==cur)show(n)});
+show(fromHash());
+}
+</script>
+</body>
+</html>
